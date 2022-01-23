@@ -8,10 +8,17 @@ import application.management.task.model.History;
 import application.management.task.model.State;
 import application.management.task.repository.ApplicationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,6 +30,9 @@ public class ApplicationService {
 
     @Autowired
     private HistoryService historyService;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     public List<Application> getAllApplications() {
         return applicationRepository.findAll();
@@ -96,5 +106,24 @@ public class ApplicationService {
         } else {
             throw new WrongStateException(String.format(ErrorMessage.WRONG_STATE.message, Arrays.asList(State.CREATED, State.VERIFIED)));
         }
+    }
+
+    public Page<Application> getAllPages(Pageable pageable, String name, State state){
+        Query query = new Query().with(pageable);
+        final List<Criteria> criteria = new ArrayList<>();
+
+        if (name != null && !name.isBlank())
+            criteria.add(Criteria.where("name").is(name));
+        if (state != null)
+            criteria.add(Criteria.where("state").is(state));
+        if (!criteria.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(criteria.toArray(new Criteria[0])));
+        }
+
+        return PageableExecutionUtils.getPage(
+                mongoTemplate.find(query, Application.class),
+                pageable,
+                () -> mongoTemplate.count(query.skip(0).limit(0), Application.class)
+        );
     }
 }

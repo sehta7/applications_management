@@ -2,8 +2,12 @@ package application.management.task.web;
 
 import application.management.task.model.Application;
 import application.management.task.model.History;
+import application.management.task.model.State;
 import application.management.task.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
@@ -62,5 +66,12 @@ public class ApplicationController {
     @PutMapping("/update")
     public void updateApplication(@RequestBody Application application){
         applicationService.updateApplication(application);
+    }
+
+    @GetMapping("/get")
+    public Page<Application> getAllPages(@RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size,
+                                    @RequestParam(required = false) String name, @RequestParam(required = false) State state) {
+        Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 10);
+        return applicationService.getAllPages(pageable, name, state);
     }
 }
