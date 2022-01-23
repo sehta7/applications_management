@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
@@ -24,54 +26,64 @@ public class ApplicationController {
     }
 
     @GetMapping("/all")
-    public List<Application> getAllApplications(){
-        return applicationService.getAllApplications();
+    public ResponseEntity<List<Application>> getAllApplications(){
+        List<Application> allApplications = applicationService.getAllApplications();
+        return ResponseEntity.ok(allApplications);
     }
 
     @GetMapping("/{id}")
-    public Application getApplication(@PathVariable BigInteger id){
-        return applicationService.getApplicationById(id);
+    public ResponseEntity<Application> getApplication(@PathVariable BigInteger id){
+        Application application = applicationService.getApplicationById(id);
+        return ResponseEntity.ok(application);
     }
 
     @PostMapping("/add")
-    public Application addApplication(@RequestBody Application application){
-        return applicationService.addApplication(application);
+    public ResponseEntity<Application> addApplication(@RequestBody Application application){
+        Application createdApplication = applicationService.addApplication(application);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdApplication);
     }
 
     @PatchMapping("/verify/{id}")
-    public void verifyApplication(@PathVariable BigInteger id){
-        applicationService.verifyApplication(id);
+    public ResponseEntity<Application> verifyApplication(@PathVariable BigInteger id){
+        Application verifiedApplication = applicationService.verifyApplication(id);
+        return ResponseEntity.ok(verifiedApplication);
     }
 
     @PatchMapping("/accept/{id}")
-    public void acceptApplication(@PathVariable BigInteger id){
-        applicationService.acceptApplication(id);
+    public ResponseEntity<Application> acceptApplication(@PathVariable BigInteger id){
+        Application acceptedApplication = applicationService.acceptApplication(id);
+        return ResponseEntity.ok(acceptedApplication);
     }
 
     @PatchMapping("/publish/{id}")
-    public void publishApplication(@PathVariable BigInteger id){
-        applicationService.publishApplication(id);
+    public ResponseEntity<Application> publishApplication(@PathVariable BigInteger id){
+        Application publishedApplication = applicationService.publishApplication(id);
+        return ResponseEntity.ok(publishedApplication);
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deleteApplication(@PathVariable BigInteger id, @RequestBody History history){
-        applicationService.deleteApplication(id, history);
+    public ResponseEntity<Application> deleteApplication(@PathVariable BigInteger id, @RequestBody History history){
+        Application deletedApplication = applicationService.deleteApplication(id, history);
+        return ResponseEntity.ok(deletedApplication);
     }
 
     @DeleteMapping("/reject/{id}")
-    public void rejectApplication(@PathVariable BigInteger id, @RequestBody History history){
-        applicationService.rejectApplication(id, history);
+    public ResponseEntity<Application> rejectApplication(@PathVariable BigInteger id, @RequestBody History history){
+        Application rejectedApplication = applicationService.rejectApplication(id, history);
+        return ResponseEntity.ok(rejectedApplication);
     }
 
     @PutMapping("/update")
-    public void updateApplication(@RequestBody Application application){
-        applicationService.updateApplication(application);
+    public ResponseEntity<Application> updateApplication(@RequestBody Application application){
+        Application updatedApplication = applicationService.updateApplication(application);
+        return ResponseEntity.ok(updatedApplication);
     }
 
     @GetMapping("/get")
-    public Page<Application> getAllPages(@RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size,
-                                    @RequestParam(required = false) String name, @RequestParam(required = false) State state) {
+    public ResponseEntity<Page<Application>> getAllPages(@RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size,
+                                                         @RequestParam(required = false) String name, @RequestParam(required = false) State state) {
         Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 10);
-        return applicationService.getAllPages(pageable, name, state);
+        Page<Application> applicationPages = applicationService.getAllPages(pageable, name, state);
+        return ResponseEntity.ok(applicationPages);
     }
 }

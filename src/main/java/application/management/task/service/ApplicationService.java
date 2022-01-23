@@ -47,53 +47,56 @@ public class ApplicationService {
         return applicationRepository.save(application);
     }
 
-    public void verifyApplication(BigInteger id) {
-        changeApplicationState(id, State.CREATED, State.VERIFIED);
+    public Application verifyApplication(BigInteger id) {
+        return changeApplicationState(id, State.CREATED, State.VERIFIED);
     }
 
-    public void acceptApplication(BigInteger id) {
-        changeApplicationState(id, State.VERIFIED, State.ACCEPTED);
+    public Application acceptApplication(BigInteger id) {
+        return changeApplicationState(id, State.VERIFIED, State.ACCEPTED);
     }
 
-    public void publishApplication(BigInteger id) {
-        changeApplicationState(id, State.ACCEPTED, State.PUBLISHED);
+    public Application publishApplication(BigInteger id) {
+        return changeApplicationState(id, State.ACCEPTED, State.PUBLISHED);
     }
 
-    private void changeApplicationState(BigInteger id, State currentState, State expectedState) {
+    private Application changeApplicationState(BigInteger id, State currentState, State expectedState) {
         Application application = applicationRepository.findById(id).orElseThrow(() -> new ApplicationNotFoundException(String.format(ErrorMessage.ENTITY_NOT_EXIST.message, id)));
         if (application.getState().equals(currentState)) {
             History history = History.builder().date(LocalDate.now()).oldState(currentState).applicationId(application.getId()).build();
             historyService.addHistory(history);
             application.setState(expectedState);
             applicationRepository.save(application);
+            return application;
         } else {
             throw new WrongStateException(String.format(ErrorMessage.WRONG_STATE.message, currentState));
         }
     }
 
-    public void deleteApplication(BigInteger id, History historyReason) {
+    public Application deleteApplication(BigInteger id, History historyReason) {
         Application application = applicationRepository.findById(id).orElseThrow(() -> new ApplicationNotFoundException(String.format(ErrorMessage.ENTITY_NOT_EXIST.message, id)));
         if (application.getState().equals(State.CREATED)) {
             History history = History.builder().date(LocalDate.now()).oldState(State.DELETED).applicationId(application.getId()).resignReason(historyReason.getResignReason()).build();
             historyService.addHistory(history);
             applicationRepository.delete(application);
+            return application;
         } else {
             throw new WrongStateException(String.format(ErrorMessage.WRONG_STATE.message, State.CREATED));
         }
     }
 
-    public void rejectApplication(BigInteger id, History historyReason) {
+    public Application rejectApplication(BigInteger id, History historyReason) {
         Application application = applicationRepository.findById(id).orElseThrow(() -> new ApplicationNotFoundException(String.format(ErrorMessage.ENTITY_NOT_EXIST.message, id)));
         if (application.getState().equals(State.VERIFIED) || application.getState().equals(State.ACCEPTED)) {
             History history = History.builder().date(LocalDate.now()).oldState(State.REJECTED).applicationId(application.getId()).resignReason(historyReason.getResignReason()).build();
             historyService.addHistory(history);
             applicationRepository.delete(application);
+            return application;
         } else {
             throw new WrongStateException(String.format(ErrorMessage.WRONG_STATE.message, Arrays.asList(State.VERIFIED, State.ACCEPTED)));
         }
     }
 
-    public void updateApplication(Application application){
+    public Application updateApplication(Application application){
         Application applicationToUpdate = applicationRepository.findById(application.getId()).orElseThrow(() -> new ApplicationNotFoundException(String.format(ErrorMessage.ENTITY_NOT_EXIST.message, application.getId())));
         if (applicationToUpdate.getState().equals(State.CREATED) || applicationToUpdate.getState().equals(State.VERIFIED)){
             if (application.getContent() != null){
@@ -103,6 +106,7 @@ public class ApplicationService {
                 applicationToUpdate.setName(application.getName());
             }
             applicationRepository.save(applicationToUpdate);
+            return applicationToUpdate;
         } else {
             throw new WrongStateException(String.format(ErrorMessage.WRONG_STATE.message, Arrays.asList(State.CREATED, State.VERIFIED)));
         }
