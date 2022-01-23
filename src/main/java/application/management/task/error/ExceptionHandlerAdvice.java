@@ -25,4 +25,18 @@ public class ExceptionHandlerAdvice {
         log.error(apiError.toString());
         return new ResponseEntity<>(apiError, apiError.getStatus());
     }
+
+    @ExceptionHandler(NoParameterException.class)
+    public ResponseEntity<Object> handleNoParameterException(NoParameterException exception){
+        ApiError apiError = new ApiError(LocalDateTime.now(), HttpStatus.BAD_REQUEST, exception.getMessage());
+        log.error(apiError.toString());
+        return new ResponseEntity<>(apiError, apiError.getStatus());
+    }
+
+    @ExceptionHandler(NoReasonException.class)
+    public ResponseEntity<Object> handleNoReasonException(NoReasonException exception){
+        ApiError apiError = new ApiError(LocalDateTime.now(), HttpStatus.NOT_ACCEPTABLE, exception.getMessage());
+        log.error(apiError.toString());
+        return new ResponseEntity<>(apiError, apiError.getStatus());
+    }
 }

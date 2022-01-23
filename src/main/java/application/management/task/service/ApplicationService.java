@@ -1,6 +1,8 @@
 package application.management.task.service;
 
 import application.management.task.error.ApplicationNotFoundException;
+import application.management.task.error.NoParameterException;
+import application.management.task.error.NoReasonException;
 import application.management.task.error.WrongStateException;
 import application.management.task.model.Application;
 import application.management.task.model.ErrorMessage;
@@ -44,7 +46,11 @@ public class ApplicationService {
 
     public Application addApplication(Application application) {
         application.setState(State.CREATED);
-        return applicationRepository.save(application);
+        if ((application.getName() != null && !application.getName().isBlank()) && (application.getContent() != null && !application.getContent().isBlank())){
+            return applicationRepository.save(application);
+        } else {
+            throw new NoParameterException(ErrorMessage.NO_PARAMETER.message);
+        }
     }
 
     public Application verifyApplication(BigInteger id) {
@@ -75,10 +81,14 @@ public class ApplicationService {
     public Application deleteApplication(BigInteger id, History historyReason) {
         Application application = applicationRepository.findById(id).orElseThrow(() -> new ApplicationNotFoundException(String.format(ErrorMessage.ENTITY_NOT_EXIST.message, id)));
         if (application.getState().equals(State.CREATED)) {
-            History history = History.builder().date(LocalDate.now()).oldState(State.DELETED).applicationId(application.getId()).resignReason(historyReason.getResignReason()).build();
-            historyService.addHistory(history);
-            applicationRepository.delete(application);
-            return application;
+            if (historyReason.getResignReason() != null && !historyReason.getResignReason().isBlank()){
+                History history = History.builder().date(LocalDate.now()).oldState(State.DELETED).applicationId(application.getId()).resignReason(historyReason.getResignReason()).build();
+                historyService.addHistory(history);
+                applicationRepository.delete(application);
+                return application;
+            } else {
+                throw new NoReasonException(ErrorMessage.NO_REASON.message);
+            }
         } else {
             throw new WrongStateException(String.format(ErrorMessage.WRONG_STATE.message, State.CREATED));
         }
@@ -87,10 +97,14 @@ public class ApplicationService {
     public Application rejectApplication(BigInteger id, History historyReason) {
         Application application = applicationRepository.findById(id).orElseThrow(() -> new ApplicationNotFoundException(String.format(ErrorMessage.ENTITY_NOT_EXIST.message, id)));
         if (application.getState().equals(State.VERIFIED) || application.getState().equals(State.ACCEPTED)) {
-            History history = History.builder().date(LocalDate.now()).oldState(State.REJECTED).applicationId(application.getId()).resignReason(historyReason.getResignReason()).build();
-            historyService.addHistory(history);
-            applicationRepository.delete(application);
-            return application;
+            if (historyReason.getResignReason() != null && !historyReason.getResignReason().isBlank()) {
+                History history = History.builder().date(LocalDate.now()).oldState(State.REJECTED).applicationId(application.getId()).resignReason(historyReason.getResignReason()).build();
+                historyService.addHistory(history);
+                applicationRepository.delete(application);
+                return application;
+            } else {
+                throw new NoReasonException(ErrorMessage.NO_REASON.message);
+            }
         } else {
             throw new WrongStateException(String.format(ErrorMessage.WRONG_STATE.message, Arrays.asList(State.VERIFIED, State.ACCEPTED)));
         }
